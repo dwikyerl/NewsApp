@@ -1,30 +1,48 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- * @flow
- */
-
 import React, {Component} from 'react';
-import {Platform, StyleSheet, Text, View} from 'react-native';
+import {Platform, StyleSheet, Text, View, FlatList} from 'react-native';
 
-const instructions = Platform.select({
-  ios: 'Press Cmd+R to reload,\n' + 'Cmd+D or shake for dev menu',
-  android:
-    'Double tap R on your keyboard to reload,\n' +
-    'Shake or press menu button for dev menu',
-});
+import { getNews } from './src/news';
 
-type Props = {};
-export default class App extends Component<Props> {
+import Article from './src/components/Article';
+
+
+export default class App extends Component {
+  state = {
+    articles: [],
+    refreshing: true
+  }
+
+  componentDidMount() {
+    this.fetchNews();
+  }
+
+  fetchNews = async () => {
+    try {
+      const articles = await getNews();
+      console.log(articles);
+      this.setState({ articles, refreshing: false });
+    } catch (e) {
+      this.setState({ refreshing: false });      
+    }
+  }
+
+  handleRefresh = () => {
+    this.setState({
+      refreshing: true
+    }, () => this.fetchNews())
+  }
+
   render() {
     return (
-      <View style={styles.container}>
-        <Text style={styles.welcome}>Welcome to React Native!</Text>
-        <Text style={styles.instructions}>To get started, edit App.js</Text>
-        <Text style={styles.instructions}>{instructions}</Text>
-      </View>
+      <FlatList 
+        data={this.state.articles}
+        renderItem={({ item }) => (
+          <Article article={item} id={item.url}/>
+        )}
+        keyExtractor={item => item.url}
+        refreshing={this.state.refreshing}
+        onRefresh={this.handleRefresh}
+      />
     );
   }
 }
